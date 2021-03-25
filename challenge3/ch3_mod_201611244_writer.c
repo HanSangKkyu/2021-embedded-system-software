@@ -20,5 +20,18 @@ void main(void){
 	dev = open("/dev/ch3_dev", O_RDWR);
 	ioctl(dev, CH3_IOCTL_WRITE, &user_str);
 
+
+	struct msg_st user_str1 = {
+		0, "reader: hi, a;sldkjfaskl;d!"
+	};
+
+	user_str1.len = strlen(user_str1.str);
+	
+	printf("Writer: hi, a;sldkjfaskl;d!\n");
+
+	dev = open("/dev/ch3_dev", O_RDWR);
+	ioctl(dev, CH3_IOCTL_WRITE, &user_str1);
+
+
 	close(dev);
 }

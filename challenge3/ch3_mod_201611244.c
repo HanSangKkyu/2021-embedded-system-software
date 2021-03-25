@@ -7,6 +7,12 @@
 #include <linux/spinlock.h>
 #include <asm/delay.h>
 
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+
 #include "ch3.h"
 #define DEV_NAME "ch3_dev"
 
@@ -33,16 +39,20 @@ void delay(int sec){
 }
 
 static int simple_ch3_write(struct msg_st *buf){
-	int ret;
 
-	spin_lock(&my_lock); 
+	struct msg_list *tmp = NULL;
+
+	int ret;
+	unsigned int i = 0;
+
+	spin_lock(&my_lock);
 	
 	ret = copy_from_user(kern_buf, buf, sizeof(struct msg_st));
 
 	tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
 	tmp->id = i;
-	tmp->msg = kern_buf;
-	printk("simple_linked_list: enter to list [%d]\n", tmp->id);
+	tmp->msg = *kern_buf;
+	printk("ch3: enter to list [%d] %d %s\n", tmp->id, tmp->msg.len , (tmp->msg.str));
 	list_add_tail(&tmp->list, &msg_list_head.list);
 
 	spin_unlock(&my_lock);
@@ -51,21 +61,28 @@ static int simple_ch3_write(struct msg_st *buf){
 }
 
 static int simple_ch3_read(struct msg_st *buf){
+
+	struct msg_list *tmp = NULL;
+	struct list_head *pos = NULL;
+	struct list_head *q = NULL;
+
 	int ret;
 	unsigned int i = 0;
 
 	list_for_each_safe(pos, q, &msg_list_head.list){
-		tmp = list_entry(pos, struct msg_list, list);
-		printk("simple_linked_list: free pos[%d], id[%d]", i , tmp->id);
-		kern_buf = tmp->id;
-		delay(5);
-		spin_lock(&my_lock);
-		ret = copy_to_user(buf, kern_buf, sizeof(struct msg_st));
-		memset(kern_buf, '\0', sizeof(struct msg_st));
-		spin_unlock(&my_lock);
-		kfree(tmp);
+		if(i==0){
+			tmp = list_entry(pos, struct msg_list, list);
+			printk("ch3: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
+			*kern_buf = tmp->msg;
+			delay(5);
+			spin_lock(&my_lock);
+			ret = copy_to_user(buf, kern_buf, sizeof(struct msg_st));
+			memset(kern_buf, '\0', sizeof(struct msg_st));
+			spin_unlock(&my_lock);
+			list_del(pos);
+			kfree(tmp);
+		}
 		i++;
-		break;
 	}
 
 
@@ -113,9 +130,6 @@ static dev_t dev_num;
 static struct cdev *cd_cdev;
 
 static int __init simple_spin_init(void){
-	struct test_list *tmp = 0;
-	struct list_head *pos = 0;
-	unsigned int i;
 	printk("ch3: init module\n");
 	INIT_LIST_HEAD(&msg_list_head.list);
 
