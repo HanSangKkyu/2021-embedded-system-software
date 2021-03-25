@@ -9,4 +9,4 @@ default:
 	gcc -o $(obj-m:.o=_writer) $(obj-m:.o=_writer.c)
 clean:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
-	rm $(obj-m:.o=_reader) , $(obj-m:.o=_writer)
+	rm $(obj-m:.o=_reader) $(obj-m:.o=_writer)
