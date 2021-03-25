@@ -7,4 +7,4 @@
 struct str_st {
 	int len; 
 	char str [128];
-}
+};

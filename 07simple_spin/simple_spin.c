@@ -11,7 +11,7 @@
 #define DEV_NAME "simple_spin_dev"
 
 MODULE_LICENSE("GPL");
-struct str_st * kern_buf;
+struct str_st *kern_buf;
 spinlock_t my_lock;
 
 void delay(int sec){
