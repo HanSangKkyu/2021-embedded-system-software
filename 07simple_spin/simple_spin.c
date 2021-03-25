@@ -41,6 +41,8 @@ static int simple_spin_write(struct str_st *buf){
 	spin_lock(&my_lock);
 	ret = copy_from_user(kern_buf, buf, sizeof(struct str_st));
 	spin_unlock(&my_lock);
+
+	return 0;
 }
 
 static long simple_spin_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
