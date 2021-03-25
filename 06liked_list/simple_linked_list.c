@@ -22,7 +22,7 @@ static int __init simple_init(void)
 {
 	struct test_list *tmp = 0;
 	struct list_head *pos = 0;
-	unsigned lnt i;
+	unsigned int i;
 
 	printk("simple_linked_list: init module\n");
 	
