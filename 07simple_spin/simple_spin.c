@@ -39,7 +39,7 @@ static int simple_spin_write(struct str_st *buf){
 	int ret;
 
 	spin_lock(&my_lock);
-	ret = copoy_from_user(kern_buf, buf, sizeof(struct str_st));
+	ret = copy_from_user(kern_buf, buf, sizeof(struct str_st));
 	spin_unlock(&my_lock);
 }
 
@@ -60,7 +60,7 @@ static long simple_spin_ioctl(struct file *file, unsigned int cmd, unsigned long
 			break;
 	}
 
-	return;
+	return 0;
 }
 
 static int simple_spin_open(struct inode *inode, struct file *file){
@@ -82,7 +82,7 @@ struct file_operations simple_spin_fops = {
 static dev_t dev_num;
 static struct cdev *cd_cdev;
 
-static int __int simple_spin_init(void){
+static int __init simple_spin_init(void){
 	int ret;
 
 	printk("simple_spin: init module\n");
