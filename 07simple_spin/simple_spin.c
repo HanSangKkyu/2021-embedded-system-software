@@ -38,7 +38,7 @@ static int simple_spin_read(struct str_st *buf){
 static int simple_spin_write(struct str_st *buf){
 	int ret;
 
-	spint_lock(&my_lock);
+	spin_lock(&my_lock);
 	ret = copoy_from_user(kern_buf, buf, sizeof(struct str_st));
 	spin_unlock(&my_lock);
 }
