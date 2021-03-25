@@ -64,8 +64,6 @@ static void __exit simple_exit(void)
 		i++;
 	}
   	
-	cdev_del(cd_cdev); // cdev를 삭제한다 
-	unregister_chrdev_region(dev_num, 1); // major 넘버를 삭제한다
 }
 
 module_init(simple_init);
