@@ -14,7 +14,7 @@ MODULE_LICENSE("GPL");
 struct test_list{
 	struct list_head list;
 	int id;
-}
+};
 
 struct test_list mylist;
 
