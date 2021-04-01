@@ -1,7 +1,6 @@
 #include <linux/init.h>
 #include <linux/module.h>
 
-
 static int __init hello_init(void)
 {
 	printk(KERN_NOTICE "Hello, World!\n");
