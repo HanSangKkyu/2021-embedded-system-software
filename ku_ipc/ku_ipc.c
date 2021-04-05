@@ -211,17 +211,25 @@ static long ku_ipc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 }
 
 static int ku_ipc_open(struct inode *inode, struct file *file){
-	printk("ku_ipc: open\n");
+	// printk("ku_ipc: open\n");
 	return 0;
 }
 
-static int ku_ipc_release(struct inode *inode, struct file *file){
+static int ku_ipc_release(struct inode *inode, struct file *file, int msqid){
 	printk("ku_ipc: release\n");
-	return 0;
+
+	if(reference_counter[msqid] > 0){
+		// 이미 사용 중이라면 
+		reference_counter[msqid] --;
+		return 0;
+	}else{
+		// 사용하고 있지 않다면
+		return -1;
+	}
 }
 
 struct file_operations ku_ipc_fops = {
-	// .unlocked_ioctl = ku_ipc_ioctl,
+	.unlocked_ioctl = ku_ipc_ioctl,
 	.read = ku_ipc_read,
 	.write = ku_ipc_write,
 	.open = ku_ipc_open,

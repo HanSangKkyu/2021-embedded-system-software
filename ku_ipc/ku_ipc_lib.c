@@ -67,8 +67,11 @@ static int ku_msgget(int key, int msgflg){
 }
 
 static int ku_msgclose(int msqid){
-	return 0;
-	return -1;
+	int ret;
+	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+	ret = close(dev, msqid);
+
+	return ret;
 }
 
 static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
@@ -76,7 +79,7 @@ static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
 	int dev;
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
 	ret = write(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
-	close(dev);
+	// ku_msgclose(msqid);
 	return ret;
 }
 
@@ -85,7 +88,8 @@ static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
 	int dev;
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
 	ret = read(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
-	print("읽은 값은 : %s", &msqp);
-	close(dev);
+	print("result : %s", &msqp);
+	// close(dev);
+	// ku_msgclose(msqid);
 	return ret;
 }
