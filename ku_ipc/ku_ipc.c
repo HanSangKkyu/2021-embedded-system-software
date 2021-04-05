@@ -98,11 +98,13 @@ void delay(int sec){
 
 static int ku_msgget(int key, int msgflg){
 	unsigned long my_msgflg = (unsigned long)msgflg;
+	printk("ku_ipc: KU_IPC_CREAT my_msgflg:%ld \n", my_msgflg);
+
 	switch(my_msgflg){
 		case KU_IPC_CREAT:
 			reference_counter[key] ++;
 			printk("ku_ipc: KU_IPC_CREAT key:%d value:%d\n", key, reference_counter[key]);
-			return key;
+			return key; // copy to user
 			break;
 		case KU_IPC_EXCL:
 			printk("ku_ipc: KU_IPC_EXCL key:%d value:%d\n", key, reference_counter[key]);
@@ -112,6 +114,7 @@ static int ku_msgget(int key, int msgflg){
 				return key;
 			}else{
 				// 사용 중이라면 
+				printk("ku_ipc: return -1", key, reference_counter[key]);
 				return -1;
 			}
 			break;
@@ -249,6 +252,10 @@ static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
 }
 
 static long ku_ipc_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
+	// printk("ku_ipc_ioctl: %d\n",KU_IPC_CREAT);
+	// printk("ku_ipc_ioctl: %ld\n",cmd);
+
+
 	struct msgget_args *my_msgget_args;
 	struct msgclose_args *my_msgclose_args;
 	struct msgsnd_args *my_msgsnd_args;
@@ -259,28 +266,31 @@ static long ku_ipc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		// ku_msgget
 		case KU_MSGGET:
 			my_msgget_args = (struct msgget_args*)arg;
-			ret = ku_msgget(*my_msgget_args.key, *my_msgget_args,msgflg);
+			// printk("ku_ipc_ioctl: %d\n",my_msgget_args->key);
+			ret = ku_msgget(my_msgget_args->key, my_msgget_args->msgflg);
 			break;
 		// ku_msgclose
 		case KU_MSGCLOSE:
 			my_msgclose_args = (struct msgclose_args*)arg;
-			ret = ku_msgclose(*my_msgclose_args.msqid);
+			// printk("ku_ipc_ioctl: %d\n",my_msgclose_args->msqid);
+			ret = ku_msgclose(my_msgclose_args->msqid);
 			break;
 
 		// ku_msgsnd
 		case KU_MSGSND:
 			my_msgsnd_args = (struct msgsnd_args*)arg;
-			ret = ku_msgsnd(*my_msgsnd_args.msqid, *my_msgsnd_args.msqp, *my_msgsnd_args.msgsz, *my_msgsnd_args.msgflg);
+			ret = ku_msgsnd(my_msgsnd_args->msqid, my_msgsnd_args->msqp, my_msgsnd_args->msgsz, my_msgsnd_args->msgflg);
 			break;
 
 		// ku_msgrcv
 		case KU_MSGRCV:
-			my_msgsnd_args = (struct msgsnd_args*)arg;
-			ret = ku_msgrcv(*my_msgsnd_args.msqid, *my_msgsnd_args.msqp, *my_msgsnd_args.msgsz, *my_msgsnd_args.msgtyp, *my_msgsnd_args.msgflg);
+			my_msgrcv_args = (struct msgrcv_args*)arg;
+			ret = ku_msgrcv(my_msgrcv_args->msqid, my_msgrcv_args->msqp, my_msgrcv_args->msgsz, my_msgrcv_args->msgtyp, my_msgrcv_args->msgflg);
 			break;
 	}
 
-	return ret;
+	// return ret;
+	return 0;
 }
 
 static int ku_ipc_open(struct inode *inode, struct file *file){
@@ -288,7 +298,7 @@ static int ku_ipc_open(struct inode *inode, struct file *file){
 	return 0;
 }
 
-static int ku_ipc_release(struct inode *inode, struct file *file, int msqid){
+static int ku_ipc_release(struct inode *inode, struct file *file){
 	printk("ku_ipc: release\n");
 	return 0;
 }

@@ -1,17 +1,7 @@
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/uaccess.h>
-#include <linux/spinlock.h>
-#include <asm/delay.h>
-
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/list.h>
-#include <linux/slab.h>
+#include <stdio.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include "ku_ipc.h"
 
@@ -63,33 +53,13 @@ struct msgbuf {
 	// char text[128];
 };
 
-struct msg_list{
-	struct list_head list;
-	struct msgbuf msg;
-};
-
-static struct msg_list msg_list_head[10];
-
-
-MODULE_LICENSE("GPL");
-struct msgbuf *kern_buf;
-spinlock_t my_lock;
-
-void delay(int sec){
-	int i,j;
-	for(j = 0; j< sec;j++){
-		for(i = 0;i<1000;i++){
-			udelay(1000);
-		}
-	}
-}
-
 static int ku_msgget(int key, int msgflg){
 	int dev;
 	int ret;
 	struct msgget_args my_args = {key, msgflg};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = ioctl(dev, KU_MSGGET, my_args);
+	// printf("ku_ipc_lib: %d\n",KU_IPC_CREAT);
+	ret = ioctl(dev, KU_MSGGET, &my_args);
 	return ret;
 }
 
@@ -98,7 +68,7 @@ static int ku_msgclose(int msqid){
 	int ret;
 	struct msgclose_args my_args = {msqid};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = ioctl(dev, KU_MSGCLOSE, my_args);
+	ret = ioctl(dev, KU_MSGCLOSE, &my_args);
 	return ret;
 }
 
@@ -107,7 +77,7 @@ static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
 	int ret;
 	struct msgsnd_args my_args = {msqid,msqp,msgsz,msgflg};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = ioctl(dev, KU_MSGSND, my_args);
+	ret = ioctl(dev, KU_MSGSND, &my_args);
 	return ret;
 }
 
@@ -116,6 +86,6 @@ static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
 	int ret;
 	struct msgrcv_args my_args = {msqid,msqp,msgsz,msgtyp,msgflg};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = ioctl(dev, KU_MSGRCV, my_args);
+	ret = ioctl(dev, KU_MSGRCV, &my_args);
 	return ret;
 }

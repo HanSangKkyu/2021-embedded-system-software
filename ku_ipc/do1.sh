@@ -1,9 +1,11 @@
 make
-insmod simple_block_1.ko
+insmod ku_ipc.ko
 sh mknod.sh
-./simple_block_1_reader
+./ku_ipc_reader
+./ku_ipc_writer
 
-# rmmod simple_block_1
-# rm /dev/simple_block_1_dev
+
+rmmod ku_ipc
+rm /dev/ku_ipc_dev
 # dmesg
-# make clean
+make clean
