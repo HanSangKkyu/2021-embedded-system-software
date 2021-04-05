@@ -14,6 +14,14 @@
 #include <linux/slab.h>
 
 #include "ku_ipc.h"
+
+#define IOCTL_START_NUM 0x80
+#define IOCTL_NUM1 IOCTL_START_NUM + 1
+#define IOCTL_NUM2 IOCTL_START_NUM + 2
+#define IOCTL_NUM3 IOCTL_START_NUM + 3
+#define IOCTL_NUM4 IOCTL_START_NUM + 4
+
+
 #define DEV_NAME "ku_ipc_dev"
 
 struct msgbuf {
@@ -57,6 +65,13 @@ void delay(int sec){
 		}
 	}
 }
+
+
+// static ssize_t simple_char_write(struct file *file, const char *buf, size_t len, loff_t *lof){
+//         printk("simple_char: write%s\n", buf);
+//         return len;
+// }
+
 
 static int ku_ipc_write(struct file *file, int msqid, void *msqp, int msgsz, int msgflg){
 
