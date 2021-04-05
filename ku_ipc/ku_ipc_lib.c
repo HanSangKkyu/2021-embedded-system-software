@@ -15,14 +15,47 @@
 
 #include "ku_ipc.h"
 
+#define SIMPLE_IOCTL_NUM 'z'
 #define IOCTL_START_NUM 0x80
 #define IOCTL_NUM1 IOCTL_START_NUM + 1
 #define IOCTL_NUM2 IOCTL_START_NUM + 2
 #define IOCTL_NUM3 IOCTL_START_NUM + 3
 #define IOCTL_NUM4 IOCTL_START_NUM + 4
+#define IOCTL_NUM5 IOCTL_START_NUM + 5
+#define IOCTL_NUM6 IOCTL_START_NUM + 6
+#define IOCTL_NUM7 IOCTL_START_NUM + 7
+#define IOCTL_NUM8 IOCTL_START_NUM + 8
+#define KU_MSGGET _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM5, unsigned long)
+#define KU_MSGCLOSE _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM6, unsigned long)
+#define KU_MSGSND _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM7, unsigned long)
+#define KU_MSGRCV _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM8, unsigned long)
 
 
 #define DEV_NAME "ku_ipc_dev"
+
+struct msgget_args {
+	int key;
+	int msgflg;
+};
+
+struct msgclose_args {
+	int msqid;
+};
+
+struct msgsnd_args {
+	int msqid;
+	void *msqp;
+	int msgsz;
+	int msgflg;
+};
+
+struct msgrcv_args {
+	int msqid;
+	void *msqp;
+	int msgsz;
+	long msgtyp;
+	int msgflg;
+};
 
 struct msgbuf {
 	long type;
@@ -35,7 +68,7 @@ struct msg_list{
 	struct msgbuf msg;
 };
 
-static struct msg_list msg_list_head[KUIPC_MAXMSG];
+static struct msg_list msg_list_head[10];
 
 
 MODULE_LICENSE("GPL");
@@ -52,52 +85,37 @@ void delay(int sec){
 }
 
 static int ku_msgget(int key, int msgflg){
-	
 	int dev;
 	int ret;
-
-	switch(msgflg){
-		case KU_IPC_CREAT:
-			// key값의 큐 ID를 반환
-			// ret = write(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
-			dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-			ret = ioctl(dev, KU_IPC_CREAT, key);
-
-			break;
-		case KU_IPC_EXCL:
-			// key값의 큐가 이미 사용중이라면 -1을 반환 어떤 프로세스가 사용중이지 않다면 return ID
-			dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-			ret = ioctl(dev, KU_IPC_EXCL, key);
-			break;
-	}
-	
+	struct msgget_args my_args = {key, msgflg};
+	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+	ret = ioctl(dev, KU_MSGGET, my_args);
 	return ret;
 }
 
 static int ku_msgclose(int msqid){
+	int dev;
 	int ret;
+	struct msgclose_args my_args = {msqid};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = close(dev, msqid);
-
+	ret = ioctl(dev, KU_MSGCLOSE, my_args);
 	return ret;
 }
 
 static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
-	int ret;
 	int dev;
+	int ret;
+	struct msgsnd_args my_args = {msqid,msqp,msgsz,msgflg};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = write(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
-	// ku_msgclose(msqid);
+	ret = ioctl(dev, KU_MSGSND, my_args);
 	return ret;
 }
 
 static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
-	int ret;
 	int dev;
+	int ret;
+	struct msgrcv_args my_args = {msqid,msqp,msgsz,msgtyp,msgflg};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = read(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
-	print("result : %s", &msqp);
-	// close(dev);
-	// ku_msgclose(msqid);
+	ret = ioctl(dev, KU_MSGRCV, my_args);
 	return ret;
 }

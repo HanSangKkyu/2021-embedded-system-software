@@ -1,7 +1,6 @@
-#define KUIPC_MAXMSG 10
-#define KUIPC_MAXVOL 128
+#define KUIPC_MAXMSG 128
+#define KUIPC_MAXVOL 1024
 
-#define SIMPLE_IOCTL_NUM 'z'
 #define KU_IPC_CREAT _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM1, unsigned long)
 #define KU_IPC_EXCL _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM2, unsigned long)
 #define KU_IPC_NOWAIT _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM3, unsigned long)
