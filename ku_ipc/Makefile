@@ -1,4 +1,4 @@
-obj-m := simple_block_2.o
+obj-m := ku_ipc.o
 
 KERNELDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
@@ -10,3 +10,4 @@ default:
 clean:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
 	rm $(obj-m:.o=_reader) $(obj-m:.o=_writer)
+

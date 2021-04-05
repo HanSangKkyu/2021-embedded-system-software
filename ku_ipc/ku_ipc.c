@@ -36,7 +36,8 @@ struct msgbuf *kern_buf;
 spinlock_t my_lock;
 wait_queue_head_t my_wq;
 
-static int getSize(struct msg_list *linked_list){
+static int getSize(struct msg_list linked_list){
+	struct list_head *pos = NULL;
 
 	int ret = 0;
 	list_for_each(pos, &linked_list.list){
@@ -59,20 +60,21 @@ void delay(int sec){
 
 static int ku_ipc_write(struct file *file, int msqid, void *msqp, int msgsz, int msgflg){
 
+	int ret;
 	struct msg_list *tmp = NULL;
 
-	unsigned int i = 0;
+	// unsigned int i = 0;
 
 	if(getSize(msg_list_head[msqid]) < KUIPC_MAXVOL){
 		// 해당 링크드 리스트에 유휴공간이 있으면
 		spin_lock(&my_lock);
 	
-		ret = copy_from_user(kern_buf, msqp, sizeof(struct msgbuf));
+		copy_from_user(kern_buf, msqp, sizeof(struct msgbuf));
 
 		tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
 		// tmp->id = i;
 		tmp->msg = *kern_buf;
-		printk("ku_ipc: enter to list [%d] %s\n", msqid, (tmp->msg.str));
+		printk("ku_ipc: enter to list [%d] %s\n", msqid, (tmp->msg.text));
 		list_add_tail(&tmp->list, &msg_list_head[msqid].list);
 
 		spin_unlock(&my_lock);
@@ -95,7 +97,7 @@ static int ku_ipc_write(struct file *file, int msqid, void *msqp, int msgsz, int
 		}
 	}
 
-
+	return ret;
 }
 
 
@@ -134,10 +136,10 @@ static int ku_ipc_read(struct file *file, int msqid, void *msqp, int msgsz, long
 			// 읽을 데이터가 msgsz 보다 클 때
 			if(msgflg == KU_MSG_NOERROR){
 				// 읽을 수 있는 만큼만 보내기
-				list_for_each_safe(pos, q, &msg_list_head.list){
+				list_for_each_safe(pos, q, &msg_list_head[msqid].list){
 					if(i < msgsz){
 						tmp = list_entry(pos, struct msg_list, list);
-						printk("ku_ipc: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
+						// printk("ku_ipc: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
 						*kern_buf = tmp->msg;
 						tmp_sring[i] = kern_buf->text[0];
 						delay(5);
@@ -158,9 +160,9 @@ static int ku_ipc_read(struct file *file, int msqid, void *msqp, int msgsz, long
 			}
 		}else{
 			// 읽을 데이터가 msgsz보다 작을 때
-			list_for_each_safe(pos, q, &msg_list_head.list){
+			list_for_each_safe(pos, q, &msg_list_head[msqid].list){
 				tmp = list_entry(pos, struct msg_list, list);
-				printk("ku_ipc: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
+				// printk("ku_ipc: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
 				*kern_buf = tmp->msg;
 				tmp_sring[i] = kern_buf->text[0];
 				delay(5);
@@ -180,8 +182,8 @@ static int ku_ipc_read(struct file *file, int msqid, void *msqp, int msgsz, long
 }
 
 static long ku_ipc_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
-	struct msgbuf *user_buf;
-	int ret;
+	// struct msgbuf *user_buf;
+	// int ret;
 
 	int key = (int)arg;
 
@@ -240,17 +242,14 @@ static dev_t dev_num;
 static struct cdev *cd_cdev;
 
 static int __init ku_ipc_init(void){
-	printk("ku_ipc: init module\n");
-	INIT_LIST_HEAD(&msg_list_head.list);
-
-	// reference counter 초기화
-	int i = 0;
-	for(i = 0;i<KUIPC_MAXMSG;i++){
-		reference_counter[i] = 0;
-	}
-
-
+	int idx;
 	int ret;
+	printk("ku_ipc: init module\n");
+
+	for(idx = 0;idx<KUIPC_MAXMSG;idx++){
+		INIT_LIST_HEAD(&msg_list_head[idx].list); // 큐 배열 초기화
+		reference_counter[idx] = 0; // reference counter 초기화
+	}
 
 	printk("ku_ipc: init module\n");
 	alloc_chrdev_region(&dev_num, 0, 1, DEV_NAME); // major넘버를 얻어온다
