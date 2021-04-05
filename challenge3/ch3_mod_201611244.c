@@ -17,12 +17,12 @@
 #define DEV_NAME "ch3_dev"
 
 struct msg_list{
-	struct list_head list;
+	struct list_head list; // 더블 포인터가 달린다.
 	struct msg_st msg;
 	int id;
 };
 
-static struct msg_list msg_list_head;
+static struct msg_list msg_list_head; // 링크드 리스트의 헤더를 나타내는 노드이다
 
 
 MODULE_LICENSE("GPL");
@@ -46,8 +46,10 @@ static int simple_ch3_write(struct msg_st *buf){
 	unsigned int i = 0;
 
 	spin_lock(&my_lock);
-	
+
+	// 유저 버퍼에 있는 데이터를 커널 버퍼로 옮긴다
 	ret = copy_from_user(kern_buf, buf, sizeof(struct msg_st));
+	// 커널 버퍼에 데이터가 이미 있어도 덮어쓰기 하나보다
 
 	tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
 	tmp->id = i;
@@ -71,13 +73,13 @@ static int simple_ch3_read(struct msg_st *buf){
 
 	list_for_each_safe(pos, q, &msg_list_head.list){
 		if(i==0){
-			tmp = list_entry(pos, struct msg_list, list);
+			tmp = list_entry(pos, struct msg_list, list); // 링크드 리스트의 하나의 노드를 가져온다
 			printk("ch3: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
-			*kern_buf = tmp->msg;
+			*kern_buf = tmp->msg; // 가져온 노드를 커널 버퍼에 넣는다.
 			delay(5);
 			spin_lock(&my_lock);
-			ret = copy_to_user(buf, kern_buf, sizeof(struct msg_st));
-			memset(kern_buf, '\0', sizeof(struct msg_st));
+			ret = copy_to_user(buf, kern_buf, sizeof(struct msg_st)); // 커널 버퍼의 데이터를 유저 버퍼로 옮긴다
+			memset(kern_buf, '\0', sizeof(struct msg_st)); // 커널 버퍼를 비워준다
 			spin_unlock(&my_lock);
 			list_del(pos);
 			kfree(tmp);
@@ -131,7 +133,7 @@ static struct cdev *cd_cdev;
 
 static int __init simple_spin_init(void){
 	printk("ch3: init module\n");
-	INIT_LIST_HEAD(&msg_list_head.list);
+	INIT_LIST_HEAD(&msg_list_head.list); // 자동으로 링크드 리스트가 되게 만들어 준다
 
 
 	int ret;
@@ -146,7 +148,7 @@ static int __init simple_spin_init(void){
 		return -1;
 	}
 
-	kern_buf = (struct msg_st*)vmalloc(sizeof(struct msg_st));
+	kern_buf = (struct msg_st*)vmalloc(sizeof(struct msg_st)); // 커널 버퍼에 공간을 할당한다
 	memset(kern_buf, '\0', sizeof(struct msg_st));
 
 	return 0;

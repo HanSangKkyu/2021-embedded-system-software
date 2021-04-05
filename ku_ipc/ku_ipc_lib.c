@@ -23,16 +23,15 @@ struct msgbuf {
 };
 
 struct msg_list{
-	int id;
 	struct list_head list;
-	struct msgbuf msg[KUIPC_MAXVOL];
+	struct msgbuf msg;
 };
 
 static struct msg_list msg_list_head[KUIPC_MAXMSG];
 
 
 MODULE_LICENSE("GPL");
-struct msg_st *kern_buf;
+struct msgbuf *kern_buf;
 spinlock_t my_lock;
 
 void delay(int sec){
@@ -44,54 +43,49 @@ void delay(int sec){
 	}
 }
 
-static int simple_ch3_write(struct msg_st *buf){
-
-	struct msg_list *tmp = NULL;
-
-	int ret;
-	unsigned int i = 0;
-
-	spin_lock(&my_lock);
+static int ku_msgget(int key, int msgflg){
 	
-	ret = copy_from_user(kern_buf, buf, sizeof(struct msg_st));
+	int dev;
+	int ret;
 
-	tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
-	tmp->id = i;
-	tmp->msg = *kern_buf;
-	printk("ch3: enter to list [%d] %d %s\n", tmp->id, tmp->msg.len , (tmp->msg.str));
-	list_add_tail(&tmp->list, &msg_list_head.list);
+	switch(msgflg){
+		case KU_IPC_CREAT:
+			// key값의 큐 ID를 반환
+			// ret = write(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
+			dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+			ret = ioctl(dev, KU_IPC_CREAT, key);
 
-	spin_unlock(&my_lock);
-
-	return 0;
+			break;
+		case KU_IPC_EXCL:
+			// key값의 큐가 이미 사용중이라면 -1을 반환 어떤 프로세스가 사용중이지 않다면 return ID
+			dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+			ret = ioctl(dev, KU_IPC_EXCL, key);
+			break;
+	}
+	
+	return ret;
 }
 
-static int simple_ch3_read(struct msg_st *buf){
+static int ku_msgclose(int msqid){
+	return 0;
+	return -1;
+}
 
-	struct msg_list *tmp = NULL;
-	struct list_head *pos = NULL;
-	struct list_head *q = NULL;
-
+static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
 	int ret;
-	unsigned int i = 0;
+	int dev;
+	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+	ret = write(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
+	close(dev);
+	return ret;
+}
 
-	list_for_each_safe(pos, q, &msg_list_head.list){
-		if(i==0){
-			tmp = list_entry(pos, struct msg_list, list);
-			printk("ch3: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
-			*kern_buf = tmp->msg;
-			delay(5);
-			spin_lock(&my_lock);
-			ret = copy_to_user(buf, kern_buf, sizeof(struct msg_st));
-			memset(kern_buf, '\0', sizeof(struct msg_st));
-			spin_unlock(&my_lock);
-			list_del(pos);
-			kfree(tmp);
-		}
-		i++;
-	}
-
-
-
+static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
+	int ret;
+	int dev;
+	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+	ret = read(dev, msqid, msqp, msgsz, msgflg); // 시스템콜 호출
+	print("읽은 값은 : %s", &msqp);
+	close(dev);
 	return ret;
 }

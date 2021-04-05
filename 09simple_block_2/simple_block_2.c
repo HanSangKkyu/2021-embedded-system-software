@@ -26,6 +26,8 @@ static long simple_block_2_ioctl(struct file *file, unsigned int cmd, unsigned l
 			printk("simple_block_2: Process %i (%s) sleep\n", current->pid, current->comm);
 			
 			ret = wait_event_interruptible(my_wq, my_data > 0);
+			// my_data > 0 이 만족할 때까지 잠들겠다
+			// my_data에 데이터가 들어올 때까지 잠들겠다
 			if(ret < 0)
 				return ret;
 			break;
@@ -38,7 +40,7 @@ static long simple_block_2_ioctl(struct file *file, unsigned int cmd, unsigned l
 			break;
 		case WQ_WAKE_UP:
 			spin_lock(&my_lock);
-			my_data = my_data + (long)arg;
+			my_data = my_data + (long)arg; // my_data에 데이터를 넣어서 wq에 잠들어 있는 프로세스를 깨운다
 			printk("simple_block_2: Wake up\n");
 			spin_unlock(&my_lock);
 			wake_up_interruptible(&my_wq);
