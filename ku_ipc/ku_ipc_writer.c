@@ -30,7 +30,10 @@ void main(void){
 
 	// close(fd);
 	// ku_msgclose(0);
-	printf("ku_ipc_writer: %d\n", ku_msgclose(0));
-	printf("ku_ipc_writer: %d\n", ku_msgclose(1));
-
+	// printf("ku_ipc_writer: %d\n", ku_msgclose(0));
+	// printf("ku_ipc_writer: %d\n", ku_msgclose(1));
+	struct msgbuf my_msgbuf = {0, "a"};
+	// printf("ku_ipc_reader: %d\n", ku_msgsnd(0, &my_msgbuf, 1, KU_IPC_NOWAIT));
+	// ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg)
+	printf("ku_ipc_writer: %d\n", ku_msgrcv(0, &my_msgbuf, 4, 0, KU_IPC_NOWAIT));
 }

@@ -76,9 +76,9 @@ static int ku_msgsnd(int msqid, void *msgp, int msgsz, int msgflg){
 	int dev;
 	int ret=0;
 	struct msgsnd_args my_args = {msqid,msgp,msgsz,msgflg};
-	printf("ku_ipc: msgsnd_args %d  %s  %d  %d\n",msqid,((struct msgbuf*)msgp)->text,msgsz,msgflg);
-	// dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	// ret = ioctl(dev, KU_MSGSND, &my_args);
+	// printf("ku_ipc: msgsnd_args %d  %c  %d  %d\n",msqid,((struct msgbuf*)msgp)->text[0],msgsz,msgflg);
+	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+	ret = ioctl(dev, KU_MSGSND, &my_args);
 	return ret;
 }
 

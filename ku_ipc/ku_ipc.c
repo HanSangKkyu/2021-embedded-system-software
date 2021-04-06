@@ -76,11 +76,13 @@ struct msgbuf *kern_buf;
 spinlock_t my_lock;
 wait_queue_head_t my_wq;
 
-static int getSize(struct msg_list linked_list){
+static int getSize(struct list_head* list){
 	struct list_head *pos = NULL;
 
 	int ret = 0;
-	list_for_each(pos, &linked_list.list){
+
+	// printk("%ld",list);
+	list_for_each(pos, list){
 		ret ++;
 	}
 
@@ -140,18 +142,20 @@ static int ku_msgsnd(int msqid, void *msgp, int msgsz, int msgflg){
 	int ret;
 	struct msg_list *tmp = NULL;
 
-	// unsigned int i = 0;
+	printk("ku_msgsnd: %d",getSize(&(msg_list_head[msqid].list)));
 
-	if(getSize(msg_list_head[msqid]) < KUIPC_MAXMSG){
-		// 해당 링크드 리스트에 유휴공간이 있으면
+	if(getSize(&(msg_list_head[msqid].list)) < KUIPC_MAXMSG){
+		// 해당 링크드 리스트에 유휴공이 있으면
 		spin_lock(&my_lock);
 	
-		copy_from_user(kern_buf, msgp, sizeof(struct msgbuf));
+		copy_from_user(kern_buf, (struct msgbuf*)msgp, sizeof(struct msgbuf));
 
 		tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
 		// tmp->id = i;
 		tmp->msg = *kern_buf;
-		printk("ku_ipc: enter to list [%d] %s\n", msqid, (tmp->msg.text));
+		// tmp->msg = *((struct msgbuf*)msgp);
+
+		printk("ku_ipc: enter to list [%d] %c\n", msqid, (tmp->msg.text[0]));
 		list_add_tail(&tmp->list, &msg_list_head[msqid].list);
 
 		spin_unlock(&my_lock);
@@ -164,7 +168,7 @@ static int ku_msgsnd(int msqid, void *msgp, int msgsz, int msgflg){
 		else if(msgflg == 0){
 			//block 시키자 해당 프로세스 재우기
 			// 어떤 프로세스가 메시지 큐를 비우면 그 때 메세지를 보내자
-			ret = wait_event_interruptible(my_wq, getSize(msg_list_head[msqid]) < KUIPC_MAXMSG);
+			ret = wait_event_interruptible(my_wq, getSize(&(msg_list_head[msqid].list)) < KUIPC_MAXMSG);
 			// getSize(msg_list_head[msqid]) < KUIPC_MAXVOL 이 만족할 때까지 잠들겠다
 			// msg_list_head[msqid]에 있는 데이터를 가져갈 때까지 잠든다
 			if(ret < 0)
@@ -188,7 +192,7 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 	int ret;
 	unsigned int i = 0;
 
-	int msgSize = getSize(msg_list_head[msqid]);
+	int msgSize = getSize(&(msg_list_head[msqid].list));
 
 
 	if(msgSize == 0){
@@ -198,10 +202,9 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 			return -1;
 		}else{
 			// 읽을 데이터가 들어오길 기다린다.
-			ret = wait_event_interruptible(my_wq, getSize(msg_list_head[msqid]) > 0);
+			ret = wait_event_interruptible(my_wq, getSize(&(msg_list_head[msqid].list)) > 0);
 			
 		}
-		
 	}else{
 		// 읽을 데이터가 있을 때
 		if(msgSize > msgsz){
@@ -239,13 +242,15 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 				tmp_sring[i] = kern_buf->text[0];
 				delay(5);
 				spin_lock(&my_lock);
-				ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
+				// ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
 				memset(kern_buf, '\0', sizeof(struct msgbuf));
 				spin_unlock(&my_lock);
 				list_del(pos);
 				kfree(tmp);
 				i++;
 			}
+
+			ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
 		}
 
 
@@ -283,6 +288,7 @@ static long ku_ipc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		// ku_msgsnd
 		case KU_MSGSND:
 			my_msgsnd_args = (struct msgsnd_args*)arg;
+			// printk("ku_ipc_ccc: %d %c %d %d",my_msgsnd_args->msqid, ((struct msgbuf*)(my_msgsnd_args->msgp))->text[0], my_msgsnd_args->msgsz, my_msgsnd_args->msgflg);
 			ret = ku_msgsnd(my_msgsnd_args->msqid, my_msgsnd_args->msgp, my_msgsnd_args->msgsz, my_msgsnd_args->msgflg);
 			break;
 
