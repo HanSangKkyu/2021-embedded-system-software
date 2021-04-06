@@ -43,14 +43,14 @@ struct msgclose_args {
 
 struct msgsnd_args {
 	int msqid;
-	void *msqp;
+	void *msgp;
 	int msgsz;
 	int msgflg;
 };
 
 struct msgrcv_args {
 	int msqid;
-	void *msqp;
+	void *msgp;
 	int msgsz;
 	long msgtyp;
 	int msgflg;
@@ -126,14 +126,16 @@ static int ku_msgclose(int msqid){
 	if(reference_counter[msqid] > 0){
 		// 이미 사용 중이라면 
 		reference_counter[msqid] --;
+		printk("ku_ipc: ku_msgclose key:%d value:%d\n", msqid, reference_counter[msqid]);
 		return 0;
 	}else{
 		// 사용하고 있지 않다면
+		printk("ku_ipc: ku_msgclose not used");
 		return -1;
 	}
-}
+} 
 
-static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
+static int ku_msgsnd(int msqid, void *msgp, int msgsz, int msgflg){
 
 	int ret;
 	struct msg_list *tmp = NULL;
@@ -144,7 +146,7 @@ static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
 		// 해당 링크드 리스트에 유휴공간이 있으면
 		spin_lock(&my_lock);
 	
-		copy_from_user(kern_buf, msqp, sizeof(struct msgbuf));
+		copy_from_user(kern_buf, msgp, sizeof(struct msgbuf));
 
 		tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
 		// tmp->id = i;
@@ -175,7 +177,7 @@ static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
 	return ret;
 }
 
-static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
+static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 
 	struct msg_list *tmp = NULL;
 	struct list_head *pos = NULL;
@@ -214,7 +216,7 @@ static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
 						tmp_sring[i] = kern_buf->text[0];
 						delay(5);
 						spin_lock(&my_lock);
-						ret = copy_to_user(msqp, tmp_sring, sizeof(struct msgbuf));
+						ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
 						memset(kern_buf, '\0', sizeof(struct msgbuf));
 						spin_unlock(&my_lock);
 						list_del(pos);
@@ -237,7 +239,7 @@ static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
 				tmp_sring[i] = kern_buf->text[0];
 				delay(5);
 				spin_lock(&my_lock);
-				ret = copy_to_user(msqp, tmp_sring, sizeof(struct msgbuf));
+				ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
 				memset(kern_buf, '\0', sizeof(struct msgbuf));
 				spin_unlock(&my_lock);
 				list_del(pos);
@@ -268,6 +270,8 @@ static long ku_ipc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			my_msgget_args = (struct msgget_args*)arg;
 			// printk("ku_ipc_ioctl: %d\n",my_msgget_args->key);
 			ret = ku_msgget(my_msgget_args->key, my_msgget_args->msgflg);
+			// printk("ku_ipc_ioctl: %d\n",ret);
+			// return ret;
 			break;
 		// ku_msgclose
 		case KU_MSGCLOSE:
@@ -279,18 +283,18 @@ static long ku_ipc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		// ku_msgsnd
 		case KU_MSGSND:
 			my_msgsnd_args = (struct msgsnd_args*)arg;
-			ret = ku_msgsnd(my_msgsnd_args->msqid, my_msgsnd_args->msqp, my_msgsnd_args->msgsz, my_msgsnd_args->msgflg);
+			ret = ku_msgsnd(my_msgsnd_args->msqid, my_msgsnd_args->msgp, my_msgsnd_args->msgsz, my_msgsnd_args->msgflg);
 			break;
 
 		// ku_msgrcv
 		case KU_MSGRCV:
 			my_msgrcv_args = (struct msgrcv_args*)arg;
-			ret = ku_msgrcv(my_msgrcv_args->msqid, my_msgrcv_args->msqp, my_msgrcv_args->msgsz, my_msgrcv_args->msgtyp, my_msgrcv_args->msgflg);
+			ret = ku_msgrcv(my_msgrcv_args->msqid, my_msgrcv_args->msgp, my_msgrcv_args->msgsz, my_msgrcv_args->msgtyp, my_msgrcv_args->msgflg);
 			break;
 	}
 
-	// return ret;
-	return 0;
+	return ret;
+	// return 0;
 }
 
 static int ku_ipc_open(struct inode *inode, struct file *file){

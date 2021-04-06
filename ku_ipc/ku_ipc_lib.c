@@ -34,14 +34,14 @@ struct msgclose_args {
 
 struct msgsnd_args {
 	int msqid;
-	void *msqp;
+	void *msgp;
 	int msgsz;
 	int msgflg;
 };
 
 struct msgrcv_args {
 	int msqid;
-	void *msqp;
+	void *msgp;
 	int msgsz;
 	long msgtyp;
 	int msgflg;
@@ -72,19 +72,20 @@ static int ku_msgclose(int msqid){
 	return ret;
 }
 
-static int ku_msgsnd(int msqid, void *msqp, int msgsz, int msgflg){
+static int ku_msgsnd(int msqid, void *msgp, int msgsz, int msgflg){
 	int dev;
-	int ret;
-	struct msgsnd_args my_args = {msqid,msqp,msgsz,msgflg};
-	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
-	ret = ioctl(dev, KU_MSGSND, &my_args);
+	int ret=0;
+	struct msgsnd_args my_args = {msqid,msgp,msgsz,msgflg};
+	printf("ku_ipc: msgsnd_args %d  %s  %d  %ld",msqid,*msgp.text,msgsz,msgflg);
+	// dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
+	// ret = ioctl(dev, KU_MSGSND, &my_args);
 	return ret;
 }
 
-static int ku_msgrcv(int msqid, void *msqp, int msgsz, long msgtyp, int msgflg){
+static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 	int dev;
 	int ret;
-	struct msgrcv_args my_args = {msqid,msqp,msgsz,msgtyp,msgflg};
+	struct msgrcv_args my_args = {msqid,msgp,msgsz,msgtyp,msgflg};
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
 	ret = ioctl(dev, KU_MSGRCV, &my_args);
 	return ret;

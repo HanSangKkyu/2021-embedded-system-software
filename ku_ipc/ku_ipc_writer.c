@@ -29,5 +29,8 @@ void main(void){
 	// printf("success to produce: %d\n", ret);
 
 	// close(fd);
-	ku_msgclose(0);
+	// ku_msgclose(0);
+	printf("ku_ipc_writer: %d\n", ku_msgclose(0));
+	printf("ku_ipc_writer: %d\n", ku_msgclose(1));
+
 }

@@ -27,7 +27,10 @@ void main(void){
 	
 	// close(fd);
 	// ku_msgget(0, KU_IPC_CREAT);
-	printf("ku_ipc_reader: %d\n",KU_IPC_CREAT);
-	printf("ku_ipc_reader: %d\n", ku_msgget(0, KU_IPC_CREAT));
-	printf("ku_ipc_reader: %d\n", ku_msgget(0, KU_IPC_EXCL));
+	// printf("ku_ipc_reader: %d\n",KU_IPC_CREAT);
+	// printf("ku_ipc_reader: %d\n", ku_msgget(0, KU_IPC_CREAT));
+	// printf("ku_ipc_reader: %d\n", ku_msgget(0, KU_IPC_EXCL));
+	struct msgbuf my_msgbuf = {0, "a"};
+	printf("ku_ipc_reader: %d\n", ku_msgsnd(0, &my_msgbuf, 1, KU_IPC_NOWAIT));
+
 }
