@@ -1,4 +1,4 @@
-./simple_block_1_writer
-rmmod simple_block_1
-rm /dev/simple_block_1_dev
-make clean
+make
+insmod ku_ipc.ko
+sh mknod.sh
+./ku_ipc_reader

@@ -36,6 +36,6 @@ void main(void){
 	char str[128];
 	// printf("ku_ipc_reader: %d\n", ku_msgsnd(0, &my_msgbuf, 1, KU_IPC_NOWAIT));
 	// ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg)
-	printf("ku_ipc_writer: %d\n", ku_msgrcv(0, &str, 4, 0, KU_IPC_NOWAIT));
+	printf("ku_ipc_writer: %d\n", ku_msgrcv(0, &str, 4, 0, 0));
 	printf("%s\n",str);
 }

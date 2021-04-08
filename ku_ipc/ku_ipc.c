@@ -75,6 +75,8 @@ MODULE_LICENSE("GPL");
 struct msgbuf *kern_buf;
 spinlock_t my_lock;
 wait_queue_head_t my_wq;
+static long my_data;
+
 
 static int getSize(struct list_head* list){
 	struct list_head *pos = NULL;
@@ -202,8 +204,10 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 			return -1;
 		}else{
 			// 읽을 데이터가 들어오길 기다린다.
-			ret = wait_event_interruptible(my_wq, getSize(&(msg_list_head[msqid].list)) > 0);
-			
+			printk("no data here \n");
+			ret = wait_event_interruptible(my_wq, my_data > 0);
+			// getSize(&(msg_list_head[msqid].list))
+			return 100;
 		}
 	}else{
 		// 읽을 데이터가 있을 때
@@ -342,8 +346,14 @@ static int __init ku_ipc_init(void){
 		return -1;
 	}
 
+	
+	spin_lock_init(&my_lock);
+	init_waitqueue_head(&my_wq);
+
 	kern_buf = (struct msgbuf*)vmalloc(sizeof(struct msgbuf));
 	memset(kern_buf, '\0', sizeof(struct msgbuf));
+
+
 
 	return 0;
 	
