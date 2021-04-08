@@ -160,25 +160,35 @@ static int ku_msgsnd(int msqid, void *msgp, int msgsz, int msgflg){
 		printk("ku_ipc: enter to list [%d] %c\n", msqid, (tmp->msg.text[0]));
 		list_add_tail(&tmp->list, &msg_list_head[msqid].list);
 
+		my_data = 1; // my_data에 데이터를 넣어서 my_wq에 잠들어 있는 프로세스를 깨운다
+
 		spin_unlock(&my_lock);
-		return 0;
+
+
+		wake_up_interruptible(&my_wq);
+		// my_data = 0;
+		ret = 0;
 	}else{
 		// 메시지 큐에 유휴공간 없으면
 		if(msgflg == KU_IPC_NOWAIT){
-			return -1;
+			printk("ku_ipc: no space here\n", msqid, (tmp->msg.text[0]));
+			ret = -1;
 		}
 		else if(msgflg == 0){
+			printk("ku_ipc: msgflg 0\n", msqid, (tmp->msg.text[0]));
+
 			//block 시키자 해당 프로세스 재우기
 			// 어떤 프로세스가 메시지 큐를 비우면 그 때 메세지를 보내자
-			ret = wait_event_interruptible(my_wq, getSize(&(msg_list_head[msqid].list)) < KUIPC_MAXMSG);
+			ret = wait_event_interruptible(my_wq, my_data > 0);
 			// getSize(msg_list_head[msqid]) < KUIPC_MAXVOL 이 만족할 때까지 잠들겠다
 			// msg_list_head[msqid]에 있는 데이터를 가져갈 때까지 잠든다
 			if(ret < 0)
 				return ret;
 			
-			return 0;
+			ret = 0;
 		}
 	}
+
 
 	return ret;
 }
@@ -223,6 +233,10 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 						tmp_sring[i] = kern_buf->text[0];
 						delay(5);
 						spin_lock(&my_lock);
+
+
+						my_data = 1;
+
 						ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
 						memset(kern_buf, '\0', sizeof(struct msgbuf));
 						spin_unlock(&my_lock);
@@ -231,6 +245,9 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 						i++;
 					}
 				}
+				wake_up_interruptible(&my_wq);
+
+
 
 			}else{
 				// 바로 리턴
@@ -246,13 +263,17 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 				tmp_sring[i] = kern_buf->text[0];
 				delay(5);
 				spin_lock(&my_lock);
-				// ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
+
+				my_data = 1;
+
 				memset(kern_buf, '\0', sizeof(struct msgbuf));
 				spin_unlock(&my_lock);
 				list_del(pos);
 				kfree(tmp);
 				i++;
 			}
+			wake_up_interruptible(&my_wq);
+
 
 			ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
 		}
