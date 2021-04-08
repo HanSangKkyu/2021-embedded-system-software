@@ -207,7 +207,7 @@ static int ku_msgrcv(int msqid, void *msgp, int msgsz, long msgtyp, int msgflg){
 			printk("no data here \n");
 			ret = wait_event_interruptible(my_wq, my_data > 0);
 			// getSize(&(msg_list_head[msqid].list))
-			return 100;
+			return ret;
 		}
 	}else{
 		// 읽을 데이터가 있을 때
