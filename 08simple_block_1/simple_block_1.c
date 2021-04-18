@@ -73,7 +73,7 @@ struct file_operations simple_block_1_fops = {
 	.release = simple_block_1_release
 };
 
-static dev_t dev_num;
+static dev_t dev_num; // major 넘버가 담길 변수
 static struct cdev *cd_cdev;
 
 static int __init simple_block_1_init(void){
