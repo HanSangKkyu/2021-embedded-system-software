@@ -7,7 +7,7 @@
 int main(void){
     int dev;
 
-    dev = open("/dev/simple_sensor_dev", O_RDWR);
+    dev = open("/dev/spin_interrupt_dev", O_RDWR);
 
     sleep(100);
 
