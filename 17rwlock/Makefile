@@ -1,4 +1,4 @@
-obj-m := simple_sensor.o
+obj-m := simple_rwlock.o
 
 KERNELDIR := ~/linux-rpi/
 ARM := ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnueabi-
