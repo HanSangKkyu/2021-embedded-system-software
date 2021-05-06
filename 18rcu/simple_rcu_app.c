@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
     int dev;
     int i, n, op;
 
-    if(argc != 3){ // ./simple_rwlock 1 10
+    if(argc != 3){ // ./simple_rcu 1 10
         printf("Insert two arguments \n");
         printf("First argument = (1:read, 2:write) \n");
         printf("Second argument = number of iteratinos \n");
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
     op = atoi(argv[1]);
     n = atoi(argv[2]);
 
-    dev = open("/dev/simple_rwlock_dev", O_RDWR);
+    dev = open("/dev/simple_rcu_dev", O_RDWR);
 
     for(i=1; i<=n; ++i){
         if(op ==READ){
