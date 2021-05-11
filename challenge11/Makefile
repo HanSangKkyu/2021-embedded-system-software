@@ -1,4 +1,4 @@
-obj-m := simple_motor.o
+obj-m := ch11.o
 
 KERNELDIR := ~/linux-rpi/
 ARM := ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnueabi-

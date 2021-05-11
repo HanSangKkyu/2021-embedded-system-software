@@ -34,7 +34,7 @@ static void setstep(int p1, int p2, int p3, int p4){
 
 void backward(int round, int delay){
     int i = 0, j = 0;
-    for(i = 0;i<ONEROUND * round; i++){
+    for(i = 0;i<ONEROUND * round/360; i++){
         for(j=STEPS;j>0;j--){
             setstep(blue[j],pink[j], yellow[j], orange[j]);
             udelay(delay);
@@ -45,7 +45,7 @@ void backward(int round, int delay){
 
 void forward(int round, int delay){
     int i = 0, j = 0;
-    for(i = 0;i<ONEROUND * round; i++){
+    for(i = 0;i<ONEROUND * round/360; i++){
         for(j=0;j<STEPS;j++){
             setstep(blue[j],pink[j], yellow[j], orange[j]);
             udelay(delay);
@@ -56,33 +56,36 @@ void forward(int round, int delay){
 
 void moveDegree(int degree, int delay, int direction){
     if(direction == 0){
-        if(degree == 1*(degree/360))
-        forward(int round, int delay)
+        forward(degree, delay);
     }else if(direction == 1){
-
+        backward(degree, delay);
     }
 }
 
-static int __init simple_motor_init(void){
+static int __init ch11_init(void){
 
     gpio_request_one(PIN1, GPIOF_OUT_INIT_LOW, "p1");
     gpio_request_one(PIN2, GPIOF_OUT_INIT_LOW, "p2");
     gpio_request_one(PIN3, GPIOF_OUT_INIT_LOW, "p3");
     gpio_request_one(PIN4, GPIOF_OUT_INIT_LOW, "p4");
 
-    forward(1, 3000);
-    mdelay(3000);
-    backward(1, 1500);
+    moveDegree(90, 3000, 0);
+    mdelay(1200);
+    moveDegree(45, 3000, 0);
+    mdelay(1200);
+    moveDegree(45, 3000, 0);
+    mdelay(1200);
+    moveDegree(180, 3000, 0);
 
     return 0;
 }
 
-static void __exit simple_motor_exit(void){
+static void __exit ch11_exit(void){
     gpio_free(PIN1);
     gpio_free(PIN2);
     gpio_free(PIN3);
     gpio_free(PIN4);
 }
 
-module_init(simple_motor_init);
-module_exit(simple_motor_exit);
+module_init(ch11_init);
+module_exit(ch11_exit);
