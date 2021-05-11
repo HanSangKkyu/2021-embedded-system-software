@@ -20,7 +20,7 @@ static int echo_valid_flag = 3;
 static ktime_t echo_start;
 static ktime_t echo_stop;
 
-static tirqreturn_t simple_ultra_isr(int irq, void* dev_id){
+static irqreturn_t simple_ultra_isr(int irq, void* dev_id){
     ktime_t tmp_time;
     s64 time;
     int cm;
@@ -39,7 +39,7 @@ static tirqreturn_t simple_ultra_isr(int irq, void* dev_id){
             echo_stop = tmp_time;
             time = ktime_to_us(ktime_sub(echo_stop, echo_start));
             cm = (int) time / 58;
-            printk("simple_ultra : detect %d cm\n");
+            printk("simple_ultra : detect %d cm\n",cm);
 
             echo_valid_flag = 3;
         }
