@@ -19,7 +19,6 @@ int simple_kthread_func(void * dats){
 
 
 static int __init simple_kthread_init(void){
-    int ret = 0;
 
     printk("simple_kthread: init module \n");
 
