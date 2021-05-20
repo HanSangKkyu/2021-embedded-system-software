@@ -16,7 +16,7 @@ struct my_data{
 
 struct my_data my_tasklet_data;
 struct tasklet_struct my_tasklet;
-struct int irq_num;
+static int irq_num;
 
 void simple_tasklet_func(unsigned long recv_data){
     struct my_data *temp_data;
