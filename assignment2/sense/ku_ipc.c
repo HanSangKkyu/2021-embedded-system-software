@@ -38,35 +38,6 @@ spinlock_t my_lock;
 wait_queue_head_t my_wq;
 static long my_data;
 
-static ssize_t ku_ipc_read(struct file *file, char *buf, size_t len, loff_t *lof){
-	int ret;
-	char kern_buf = 'h';
-	struct list_head *pos = NULL;
-	struct msg_list *tmp = NULL;
-
-
-	printk("simple_char: read\n");
-
-
-	list_for_each(pos, &(msg_list_head.list)){
-		tmp = list_entry(pos, struct msg_list, list);
-		if(tmp->msg == NULL){
-			printk("no data here\n");
-		}else{
-			printk("send temp is %d", tmp->msg);
-			kern_buf = (tmp->msg)+'0';
-			spin_lock(&my_lock);
-			ret = copy_to_user(buf, &kern_buf, sizeof(char));
-			// memset(kern_buf, '\0', sizeof(struct str_st));
-			spin_unlock(&my_lock);
-		}
-	}
-
-	// isStop = true;
-	return ret;
-}
-
-
 static void dht11_read(void){
     int last_state = 1;
     int counter = 0;
@@ -146,6 +117,37 @@ static void dht11_read(void){
     }
 }
 
+static ssize_t ku_ipc_read(struct file *file, char *buf, size_t len, loff_t *lof){
+	int ret;
+	char kern_buf = 'h';
+	struct list_head *pos = NULL;
+	struct msg_list *tmp = NULL;
+
+
+	printk("simple_char: read\n");
+
+	dht11_read();
+
+
+	list_for_each(pos, &(msg_list_head.list)){
+		tmp = list_entry(pos, struct msg_list, list);
+		if(tmp->msg == NULL){
+			printk("no data here\n");
+		}else{
+			printk("send temp is %d", tmp->msg);
+			kern_buf = (tmp->msg)+'0';
+			spin_lock(&my_lock);
+			ret = copy_to_user(buf, &kern_buf, sizeof(char));
+			// memset(kern_buf, '\0', sizeof(struct str_st));
+			spin_unlock(&my_lock);
+		}
+	}
+
+	// isStop = true;
+	return ret;
+}
+
+
 struct file_operations ku_ipc_fops = {
 	.read = ku_ipc_read
 };
@@ -185,14 +187,15 @@ static int __init ku_ipc_init(void){
 	list_add(&tmp->list, &msg_list_head.list);
 
 	// call 
-	while(true){
-		if(isStop){
-			break;
-		}
-		dht11_read();
-		mdelay(1000);
-	}
+	// while(true){
+	// 	if(isStop){
+	// 		break;
+	// 	}
+	// 	dht11_read();
+	// 	mdelay(1000);
+	// }
 
+	dht11_read();
 
 	return 0;
 	
