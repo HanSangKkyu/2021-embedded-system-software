@@ -13,7 +13,8 @@ static int ku_read(char *stst){
 	int temp;
 	dev = open("/dev/ku_ipc_dev", O_RDWR); // 이 디바이스 드라이버를 사용하겠다
 	ret = read(dev, stst, sizeof(int));
-	printf("%c\n", *stst);
+	printf("sensor %d\n", dev);
+	// printf("%c\n", *stst);
 	// rcv_data = *stst;
 	// printf("%c\n", rcv_data);
 	// temp = atoi(rcv_data);

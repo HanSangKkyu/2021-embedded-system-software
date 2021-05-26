@@ -38,20 +38,6 @@ spinlock_t my_lock;
 wait_queue_head_t my_wq;
 static long my_data;
 
-
-// static int getSize(struct list_head* list){
-// 	struct list_head *pos = NULL;
-
-// 	int ret = 0;
-
-// 	// printk("%ld",list);
-// 	list_for_each(pos, list){
-// 		ret ++;
-// 	}
-
-// 	return ret;
-// }
-
 static ssize_t ku_ipc_read(struct file *file, char *buf, size_t len, loff_t *lof){
 	int ret;
 	char kern_buf = 'h';
@@ -76,101 +62,8 @@ static ssize_t ku_ipc_read(struct file *file, char *buf, size_t len, loff_t *lof
 		}
 	}
 
-	isStop = true;
+	// isStop = true;
 	return ret;
-}
-
-static int ku_ipc_rea12(struct inode *inode, struct file *file){
-
-	return 0;
-
-
-	// struct msg_list *tmp = NULL;
-	// struct list_head *pos = NULL;
-	// struct list_head *q = NULL;
-
-	// char tmp_sring[KUIPC_MAXMSG];
-
-	// int ret;
-	// unsigned int i = 0;
-
-	// int msgSize = getSize(&(msg_list_head[msqid].list));
-
-
-	// if(msgSize == 0){
-	// 	// 읽을 데이터가 없을 때
-	// 	if(msgflg == KU_IPC_NOWAIT){
-	// 		// 읽을 데이터가 들어오길 기다리지 않는다.
-	// 		return -1;
-	// 	}else{
-	// 		// 읽을 데이터가 들어오길 기다린다.
-	// 		printk("no data here \n");
-	// 		ret = wait_event_interruptible(my_wq, my_data > 0);
-	// 		// getSize(&(msg_list_head[msqid].list))
-	// 		return ret;
-	// 	}
-	// }else{
-	// 	// 읽을 데이터가 있을 때
-	// 	if(msgSize > msgsz){
-	// 		// 읽을 데이터가 msgsz 보다 클 때
-	// 		if(msgflg == KU_MSG_NOERROR){
-	// 			// 읽을 수 있는 만큼만 보내기
-	// 			list_for_each_safe(pos, q, &msg_list_head[msqid].list){
-	// 				if(i < msgsz){
-	// 					tmp = list_entry(pos, struct msg_list, list);
-	// 					// printk("ku_ipc: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
-	// 					*kern_buf = tmp->msg;
-	// 					tmp_sring[i] = kern_buf->text[0];
-	// 					delay(5);
-	// 					spin_lock(&my_lock);
-
-
-	// 					my_data = 1;
-
-	// 					ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
-	// 					memset(kern_buf, '\0', sizeof(struct msgbuf));
-	// 					spin_unlock(&my_lock);
-	// 					list_del(pos);
-	// 					kfree(tmp);
-	// 					i++;
-	// 				}
-	// 			}
-	// 			wake_up_interruptible(&my_wq);
-
-
-
-	// 		}else{
-	// 			// 바로 리턴
-	// 			return -1;
-
-	// 		}
-	// 	}else{
-	// 		// 읽을 데이터가 msgsz보다 작을 때
-	// 		list_for_each_safe(pos, q, &msg_list_head[msqid].list){
-	// 			tmp = list_entry(pos, struct msg_list, list);
-	// 			// printk("ku_ipc: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
-	// 			*kern_buf = tmp->msg;
-	// 			tmp_sring[i] = kern_buf->text[0];
-	// 			delay(5);
-	// 			spin_lock(&my_lock);
-
-	// 			my_data = 1;
-
-	// 			memset(kern_buf, '\0', sizeof(struct msgbuf));
-	// 			spin_unlock(&my_lock);
-	// 			list_del(pos);
-	// 			kfree(tmp);
-	// 			i++;
-	// 		}
-	// 		wake_up_interruptible(&my_wq);
-
-
-	// 		ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
-	// 	}
-
-
-	// }
-	// return ret;
 }
 
 
