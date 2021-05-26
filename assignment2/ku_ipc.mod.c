@@ -35,9 +35,11 @@ __attribute__((section("__versions"))) = {
 	{ 0xffb0dcd9, "gpiod_set_raw_value" },
 	{ 0xe31620ea, "gpiod_direction_output_raw" },
 	{ 0x350a004, "gpio_to_desc" },
+	{ 0x8899dc97, "kmem_cache_alloc_trace" },
+	{ 0x8e865d3c, "arm_delay_ops" },
+	{ 0x61a76852, "kmalloc_caches" },
 	{ 0x47229b5c, "gpio_request" },
 	{ 0x5bbe49f4, "__init_waitqueue_head" },
-	{ 0x8e865d3c, "arm_delay_ops" },
 	{ 0x88647e86, "cdev_add" },
 	{ 0x7a3acc89, "cdev_init" },
 	{ 0xb4673642, "cdev_alloc" },
@@ -57,4 +59,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "911764DF781D31E73A54D6F");
+MODULE_INFO(srcversion, "41A82652437C0CF357DA742");

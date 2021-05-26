@@ -56,45 +56,23 @@ static ssize_t ku_ipc_read(struct file *file, char *buf, size_t len, loff_t *lof
 	int ret;
 	char kern_buf = 'h';
 	struct list_head *pos = NULL;
+	struct msg_list *tmp = NULL;
 
 
 	printk("simple_char: read\n");
 
 
-	spin_lock(&my_lock);
-	ret = copy_to_user(buf, &kern_buf, sizeof(char));
-	// memset(kern_buf, '\0', sizeof(struct str_st));
-	spin_unlock(&my_lock);
-
-
-	msg_list_head
-	list_for_each(pos, list){
-		
-	}
-	if(getSize == 1){
-
-	}else{
-		printk("no data here \n");
-		ret = wait_event_interruptible(my_wq, my_data > 0);
-	}
-	list_for_each_safe(pos, q, &msg_list_head[msqid].list){
-		if(i < msgsz){
-			tmp = list_entry(pos, struct msg_list, list);
-			// printk("ku_ipc: free pos[%d], id[%d] %d %s", i , tmp->id, tmp->msg.len, (tmp->msg.str));
-			*kern_buf = tmp->msg;
-			tmp_sring[i] = kern_buf->text[0];
-			delay(5);
+	list_for_each(pos, &(msg_list_head.list)){
+		tmp = list_entry(pos, struct msg_list, list);
+		if(tmp->msg == NULL){
+			printk("no data here\n");
+		}else{
+			printk("send temp is %d", tmp->msg);
+			kern_buf = (tmp->msg)+'0';
 			spin_lock(&my_lock);
-
-
-			my_data = 1;
-
-			ret = copy_to_user(msgp, tmp_sring, sizeof(struct msgbuf));
-			memset(kern_buf, '\0', sizeof(struct msgbuf));
+			ret = copy_to_user(buf, &kern_buf, sizeof(char));
+			// memset(kern_buf, '\0', sizeof(struct str_st));
 			spin_unlock(&my_lock);
-			list_del(pos);
-			kfree(tmp);
-			i++;
 		}
 	}
 
@@ -200,6 +178,7 @@ static void dht11_read(void){
     int last_state = 1;
     int counter = 0;
     int i =0, j=0;
+	struct list_head *pos = NULL;
 	struct msg_list *tmp = NULL;
 
 
@@ -239,24 +218,35 @@ static void dht11_read(void){
     if((j>=40) && (dht11_data[4] == ((dht11_data[0] + dht11_data[1] + dht11_data[2] + dht11_data[3])&0xFF))){
         printk("Humidity: %d.%d Temperature = %d.%d C\n", dht11_data[0], dht11_data[1], dht11_data[2], dht11_data[3]);
     
-		// 해당 링크드 리스트에 유휴공이 있으면
-		spin_lock(&my_lock);
+
+
+		list_for_each(pos, &(msg_list_head.list)){
+			tmp = list_entry(pos, struct msg_list, list);
+			spin_lock(&my_lock);
+			tmp->msg = dht11_data[2];
+			printk("set temp %d",tmp->msg);
+			spin_unlock(&my_lock);
+		}
+
+
+		// // 해당 링크드 리스트에 유휴공이 있으면
+		// spin_lock(&my_lock);
 	
-		tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
-		// tmp->id = i;
-		tmp->msg = dht11_data[2];
-		// tmp->msg = *((struct msgbuf*)msgp);
+		// tmp = (struct msg_list*)kmalloc(sizeof(struct msg_list), GFP_KERNEL);
+		// // tmp->id = i;
+		// tmp->msg = dht11_data[2];
+		// // tmp->msg = *((struct msgbuf*)msgp);
 
-		printk("ku_ipc: enter to list %d\n", &(tmp->msg));
-		list_add(&tmp->list, &msg_list_head.list);
+		// printk("ku_ipc: enter to list %d\n", &(tmp->msg));
+		// list_add(&tmp->list, &msg_list_head.list);
 
-		my_data = 1; // my_data에 데이터를 넣어서 my_wq에 잠들어 있는 프로세스를 깨운다
+		// my_data = 1; // my_data에 데이터를 넣어서 my_wq에 잠들어 있는 프로세스를 깨운다
 
-		spin_unlock(&my_lock);
+		// spin_unlock(&my_lock);
 
 
-		wake_up_interruptible(&my_wq);
-		my_data = 0;
+		// wake_up_interruptible(&my_wq);
+		// my_data = 0;
 	
 	}else{
         printk("Data not good, skip\n");
