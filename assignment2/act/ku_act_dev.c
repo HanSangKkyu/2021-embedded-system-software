@@ -16,7 +16,15 @@
 #include <linux/gpio.h>
 #include <linux/delay.h>
 
-#define DEV_NAME "ku_ipc_act_dev"
+#define IOCTL_START_NUM 0x80 // 매직넘버 다른 값을 쓰는게 좋다
+#define IOCTL_NUM1 IOCTL_START_NUM+1
+#define IOCTL_NUM2 IOCTL_START_NUM+2
+
+#define SIMPLE_IOCTL_NUM 'z'
+#define IOCTL_READ _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM1, unsigned long *)
+#define IOCTL_WRITE _IOWR(SIMPLE_IOCTL_NUM, IOCTL_NUM2, unsigned long *)
+
+#define DEV_NAME "ku_act_dev"
 
 #define PIN1 6
 #define PIN2 13
@@ -38,14 +46,9 @@ static void setstep(int p1, int p2, int p3, int p4){
     gpio_set_value(PIN4, p4);
 }
 
-static bool isStop = false;
-
 
 MODULE_LICENSE("GPL");
-static char *kern_buf;
 spinlock_t my_lock;
-wait_queue_head_t my_wq;
-static long my_data;
 
 
 void forward(int round, int delay){
@@ -59,16 +62,13 @@ void forward(int round, int delay){
     setstep(0,0,0,0);
 }
 
-static ssize_t ku_ipc_write(struct file *file, const char *buf, size_t len, loff_t *lof){
+static void ku_act_dev_write(struct file *file, unsigned long arg){
 	int ret;
 	int write_data;
 
 	spin_lock(&my_lock);
-	// ret = copy_from_user(kern_buf, buf, 30);
-	// kern_buf = "hh";
-	// printk("write data is %s\n", kern_buf);
-	write_data = (int)(buf[0])-(int)('0');
-	printk("write data is %d\n", write_data);
+	copy_from_user(&write_data, (int *)arg, sizeof(int));
+	printk("ku_act_dev: write data is %d\n", write_data);
 
 	spin_unlock(&my_lock);
 	
@@ -79,24 +79,39 @@ static ssize_t ku_ipc_write(struct file *file, const char *buf, size_t len, loff
 	return ret;
 }
 
-struct file_operations ku_ipc_fops = {
-	.write = ku_ipc_write
+static long ku_act_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
+	switch(cmd){
+		case IOCTL_WRITE:
+			printk("ku_act_ioctl: IOCTL_WRITE. %ld\n", arg);
+			ku_act_dev_write(file, arg);
+			break;
+		default:
+			return -1;
+	}
+
+	return 0;
+}
+
+struct file_operations ku_act_dev_fops = {
+	.unlocked_ioctl = ku_act_ioctl
 };
+
+
 
 static dev_t dev_num;
 static struct cdev *cd_cdev;
 
-static int __init ku_ipc_init(void){
+static int __init ku_act_dev_init(void){
 	int ret;
 
-	printk("ku_ipc_act: init module\n");
+	printk("ku_act_dev: init module\n");
 
 	alloc_chrdev_region(&dev_num, 0, 1, DEV_NAME); // major넘버를 얻어온다
 	cd_cdev = cdev_alloc();// cdev구조체를 초기화 한다.
-	cdev_init(cd_cdev, &ku_ipc_fops);// cdev에 file operation을 할당한다.
+	cdev_init(cd_cdev, &ku_act_dev_fops);// cdev에 file operation을 할당한다.
 	ret = cdev_add(cd_cdev, dev_num, 1);
 	if(ret < 0){
-		printk("fail to add character device \n");
+		printk("ku_act_dev: fail to add character device \n");
 		return -1;
 	}
 
@@ -108,16 +123,15 @@ static int __init ku_ipc_init(void){
 	
 	
 	spin_lock_init(&my_lock);
-	init_waitqueue_head(&my_wq);
 
 
 	return 0;
 	
 }
 
-static void __exit ku_ipc_exit(void)
+static void __exit ku_act_dev_exit(void)
 {
-	printk("ku_ipc_act: exit module\n");
+	printk("ku_act_dev: exit module\n");
   	
 	cdev_del(cd_cdev); // cdev를 삭제한다 
 	unregister_chrdev_region(dev_num, 1); // major 넘버를 삭제한다
@@ -128,5 +142,5 @@ static void __exit ku_ipc_exit(void)
     gpio_free(PIN4);
 }
 
-module_init(ku_ipc_init);
-module_exit(ku_ipc_exit);
+module_init(ku_act_dev_init);
+module_exit(ku_act_dev_exit);

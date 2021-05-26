@@ -1,5 +1,5 @@
 
-obj-m := ku_ipc_act.o
+obj-m := ku_act_dev.o
 
 KERNELDIR := ~/linux-rpi/
 ARM := ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnueabi-
