@@ -61,9 +61,9 @@ static int __init simple_motor_init(void){
     gpio_request_one(PIN3, GPIOF_OUT_INIT_LOW, "p3");
     gpio_request_one(PIN4, GPIOF_OUT_INIT_LOW, "p4");
 
-    forward(1, 3000);
-    mdelay(3000);
-    backward(1, 1500);
+    forward(1, 900);
+    // mdelay(3000);
+    // backward(1, 900);
 
     return 0;
 }

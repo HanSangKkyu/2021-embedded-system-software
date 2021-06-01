@@ -4,6 +4,10 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 
+#include <linux/uaccess.h>
+#include <linux/spinlock.h>
+#include <asm/delay.h>
+
 MODULE_LICENSE("GPL");
 
 #define DEV_NAME "simple_char_dev"
@@ -19,8 +23,20 @@ static int simple_char_release(struct inode *inode, struct file *file) {
 }
 
 static ssize_t simple_char_read(struct file *file, char *buf, size_t len, loff_t *lof){
+	int ret;
+	char kern_buf = 'h';
+
+
 	printk("simple_char: read\n");
-	return 0;
+
+
+	// spin_lock(&my_lock);
+	ret = copy_to_user(buf, &kern_buf, sizeof(char));
+	// memset(kern_buf, '\0', sizeof(struct str_st));
+	// spin_unlock(&my_lock);
+
+
+	return ret;
 }
 
 static ssize_t simple_char_write(struct file *file, const char *buf, size_t len, loff_t *lof){

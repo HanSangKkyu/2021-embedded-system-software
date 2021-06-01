@@ -50,7 +50,7 @@ static const struct file_operations proc_info_fops = {
 };
 
 static int __init simple_proc_init(void){
-    parent_proc = proc_mkdir("simpleJ_proc_dir", NULL);
+    parent_proc = proc_mkdir("simple_proc_dir", NULL);
     proc_create("proc_info", 0666, parent_proc, &proc_info_fops);
     return 0;
 }
